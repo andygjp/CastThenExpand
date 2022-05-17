@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.OData;
+using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
@@ -9,6 +10,8 @@ builder.Services
     .AddControllers()
     .AddOData(options =>
     {
+        options.Expand().Select().Filter().OrderBy();
+        
         options.AddRouteComponents("default", GetModel());
     });
 
@@ -117,6 +120,7 @@ public static class Data
     }
 }
 
+[EnableQuery]
 public class CustomersController : ODataController
 {
     public IQueryable<Customer> Get()
@@ -130,6 +134,7 @@ public class CustomersController : ODataController
     }
 }
 
+[EnableQuery]
 public class VipCustomersController : ODataController
 {
     public IQueryable<VipCustomer> Get()
@@ -138,8 +143,12 @@ public class VipCustomersController : ODataController
     }
 }
 
+[EnableQuery(AllowedFunctions = AllowedFunctions.AllFunctions)]
 public class EmailsController : ODataController
 {
+    // I want to do this: /default/Emails?$expand=Customer/Default.VipCustomer($orderby=VipNumber), but an exception is thrown.
+    // I was originally trying to do this: /default/Emails?$filter=isof(Customer,'Default.VipCustomer')&$expand=Customer/Default.VipCustomer
+    // I can filter out non-vip customers, but I can't cast when expanding
     public IQueryable<Email> Get()
     {
         return Data.Emails().AsQueryable();
